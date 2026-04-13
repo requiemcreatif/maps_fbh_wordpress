@@ -68,3 +68,12 @@ Thumbs.db
 
 # Keep this trackable if present
 !/wp-config-sample.php
+
+# Local/dev plugins installed in Docker
+/wp-content/plugins/advanced-custom-fields/
+/wp-content/plugins/akismet/
+/wp-content/plugins/hello.php
+
+# Bundled default themes not used by this project
+/wp-content/themes/twentytwentythree/
+/wp-content/themes/twentytwentyfour/

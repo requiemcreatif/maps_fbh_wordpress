@@ -34,48 +34,46 @@ function create_labels($name) {
 	);
 }
 
+function register_maps_fbh_content_post_type($post_type, $singular, $plural, $menu_icon) {
+	register_post_type($post_type, array(
+		'label'                 => $plural,
+		'description'           => $plural . ' Post Type',
+		'labels'                => create_labels($singular),
+		'supports'              => array('title', 'editor', 'excerpt', 'thumbnail', 'revisions'),
+		'taxonomies'            => array(),
+		'hierarchical'          => false,
+		'public'                => true,
+		'show_ui'               => true,
+		'show_in_menu'          => true,
+		'show_in_admin_bar'     => true,
+		'show_in_nav_menus'     => true,
+		'can_export'            => true,
+		'has_archive'           => false,
+		'exclude_from_search'   => false,
+		'publicly_queryable'    => true,
+		'capability_type'       => 'post',
+		'show_in_rest'          => true,
+		'rest_base'             => $post_type . 's',
+		'rest_controller_class' => 'WP_REST_Posts_Controller',
+		'menu_icon'             => $menu_icon,
+	));
+}
+
 function register_custom_post_types() {
+	register_maps_fbh_content_post_type('service', 'Service', 'Services', 'dashicons-heart');
+	register_maps_fbh_content_post_type('product', 'Product', 'Products', 'dashicons-cart');
 
-    // register_post_type('athletes', array(
-	// 	'label'                 => 'Athletes',
-	// 	'description'           => 'Athletes Post Type',
-	// 	'labels'                => create_labels('Athlete'),
-	// 	'supports'              => array( 'editor', 'title', 'revisions', 'author' ),
-	// 	'taxonomies'            => array(),
-	// 	'hierarchical'          => true,
-	// 	'public'                => true,
-	// 	'show_ui'               => true,
-	// 	'show_in_menu'          => true,
-	// 	'menu_position'         => 5,
-    //     'menu_icon'            => 'dashicons-admin-users',
-	// 	'show_in_admin_bar'     => true,
-	// 	'show_in_nav_menus'     => true,
-	// 	'can_export'            => true,
-	// 	'has_archive'           => false,
-	// 	'exclude_from_search'   => false,
-	// 	'publicly_queryable'    => true,
-	// 	'capability_type'       => 'post',
-	// 	'show_in_rest'          => true,
-	// 	'rest_base'             => 'athlete',
-	// 	'rest_controller_class' => 'WP_REST_Posts_Controller',
-	// ));
-
-	register_post_type('contact_message',
-        array(
-            'labels' => array(
-                'name' => __('Contact Messages'),
-                'singular_name' => __('Contact Message')
-            ),
-            'public' => false,
-            'has_archive' => false,
-            'show_ui' => true,
-            'supports' => array('title', 'editor'),
-            'menu_icon' => 'dashicons-email-alt',
-        )
-    );
-	
-
+	register_post_type('contact_message', array(
+		'labels' => array(
+			'name' => __('Contact Messages'),
+			'singular_name' => __('Contact Message')
+		),
+		'public' => false,
+		'has_archive' => false,
+		'show_ui' => true,
+		'supports' => array('title', 'editor'),
+		'menu_icon' => 'dashicons-email-alt',
+	));
 }
 add_action('init', 'register_custom_post_types', 0);
-
 
