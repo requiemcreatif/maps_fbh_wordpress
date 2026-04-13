@@ -75,6 +75,60 @@ function maps_fbh_map_service($post) {
     );
 }
 
+function maps_fbh_get_section_post($slug) {
+    $post = get_page_by_path($slug, OBJECT, 'site_section');
+
+    if ($post) {
+        return $post;
+    }
+
+    $posts = get_posts(array(
+        'post_type' => 'site_section',
+        'post_status' => 'publish',
+        'numberposts' => 2,
+        'orderby' => 'date',
+        'order' => 'ASC',
+    ));
+
+    if (count($posts) === 1) {
+        return $posts[0];
+    }
+
+    return null;
+}
+
+function maps_fbh_get_about_section_data() {
+    $post = maps_fbh_get_section_post('about-section');
+
+    if (!$post) {
+        return array(
+            'id' => null,
+            'slug' => 'about-section',
+            'configured' => false,
+            'section_label' => '',
+            'title' => '',
+            'intro' => '',
+            'body' => '',
+            'cta_label' => '',
+            'image' => null,
+        );
+    }
+
+    $post_id = $post->ID;
+
+    return array(
+        'id' => $post_id,
+        'slug' => $post->post_name,
+        'configured' => true,
+        'section_label' => maps_fbh_get_acf_value($post_id, 'about_section_label') ?: maps_fbh_get_acf_value($post_id, 'about_eyebrow') ?: 'À propos',
+        'title' => maps_fbh_get_acf_value($post_id, 'about_title') ?: get_the_title($post_id),
+        'intro' => maps_fbh_get_acf_value($post_id, 'about_intro') ?: '',
+        'body' => maps_fbh_get_acf_value($post_id, 'about_body') ?: '',
+        'cta_label' => maps_fbh_get_acf_value($post_id, 'about_cta_label') ?: 'En savoir plus',
+        'image' => maps_fbh_normalize_image(maps_fbh_get_acf_value($post_id, 'about_image')),
+    );
+}
+
 function maps_fbh_get_content_items($post_type, $mapper) {
     $posts = get_posts(array(
         'post_type' => $post_type,
@@ -97,6 +151,11 @@ function maps_fbh_get_services($request) {
     return new WP_REST_Response($services, 200);
 }
 
+function maps_fbh_get_about_section($request) {
+    $about_section = maps_fbh_get_about_section_data();
+    return new WP_REST_Response($about_section, 200);
+}
+
 function register_routes() {
     register_rest_route('maps-fbh/v1', '/products', array(
         'methods' => WP_REST_Server::READABLE,
@@ -107,6 +166,12 @@ function register_routes() {
     register_rest_route('maps-fbh/v1', '/services', array(
         'methods' => WP_REST_Server::READABLE,
         'callback' => 'maps_fbh_get_services',
+        'permission_callback' => '__return_true',
+    ));
+
+    register_rest_route('maps-fbh/v1', '/about-section', array(
+        'methods' => WP_REST_Server::READABLE,
+        'callback' => 'maps_fbh_get_about_section',
         'permission_callback' => '__return_true',
     ));
 }

@@ -62,6 +62,28 @@ function register_maps_fbh_content_post_type($post_type, $singular, $plural, $me
 function register_custom_post_types() {
 	register_maps_fbh_content_post_type('service', 'Service', 'Services', 'dashicons-heart');
 	register_maps_fbh_content_post_type('product', 'Product', 'Products', 'dashicons-cart');
+	register_post_type('site_section', array(
+		'label'                 => 'Site Sections',
+		'description'           => 'Reusable Site Sections',
+		'labels'                => create_labels('Site Section'),
+		'supports'              => array('title', 'revisions'),
+		'taxonomies'            => array(),
+		'hierarchical'          => false,
+		'public'                => false,
+		'show_ui'               => true,
+		'show_in_menu'          => true,
+		'show_in_admin_bar'     => false,
+		'show_in_nav_menus'     => false,
+		'can_export'            => true,
+		'has_archive'           => false,
+		'exclude_from_search'   => true,
+		'publicly_queryable'    => false,
+		'capability_type'       => 'post',
+		'show_in_rest'          => true,
+		'rest_base'             => 'site-sections',
+		'rest_controller_class' => 'WP_REST_Posts_Controller',
+		'menu_icon'             => 'dashicons-layout',
+	));
 
 	register_post_type('contact_message', array(
 		'labels' => array(
@@ -76,4 +98,3 @@ function register_custom_post_types() {
 	));
 }
 add_action('init', 'register_custom_post_types', 0);
-

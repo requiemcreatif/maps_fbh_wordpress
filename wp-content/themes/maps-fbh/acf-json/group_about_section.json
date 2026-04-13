@@ -1,0 +1,72 @@
+{
+    "key": "group_maps_fbh_about_section",
+    "title": "About Section",
+    "fields": [
+        {
+            "key": "field_maps_fbh_about_section_label",
+            "label": "Section Label",
+            "name": "about_section_label",
+            "type": "text",
+            "required": 0
+        },
+        {
+            "key": "field_maps_fbh_about_title",
+            "label": "Title",
+            "name": "about_title",
+            "type": "text",
+            "required": 0
+        },
+        {
+            "key": "field_maps_fbh_about_intro",
+            "label": "Intro",
+            "name": "about_intro",
+            "type": "textarea",
+            "required": 0,
+            "new_lines": "wpautop"
+        },
+        {
+            "key": "field_maps_fbh_about_body",
+            "label": "Body",
+            "name": "about_body",
+            "type": "textarea",
+            "required": 0,
+            "new_lines": "wpautop"
+        },
+        {
+            "key": "field_maps_fbh_about_cta_label",
+            "label": "CTA Label",
+            "name": "about_cta_label",
+            "type": "text",
+            "required": 0
+        },
+        {
+            "key": "field_maps_fbh_about_image",
+            "label": "Image",
+            "name": "about_image",
+            "type": "image",
+            "required": 0,
+            "return_format": "array",
+            "preview_size": "medium",
+            "library": "all"
+        }
+    ],
+    "location": [
+        [
+            {
+                "param": "post_type",
+                "operator": "==",
+                "value": "site_section"
+            }
+        ]
+    ],
+    "menu_order": 0,
+    "position": "normal",
+    "style": "default",
+    "label_placement": "top",
+    "instruction_placement": "label",
+    "hide_on_screen": "",
+    "active": true,
+    "description": "Fields for the homepage about section.",
+    "show_in_rest": 1,
+    "modified": 1776085200
+}
