@@ -1,166 +1,167 @@
 <?php
+ini_set('error_reporting', E_STRICT);
+
+// Include necessary files
+require_once 'inc/custom-post-types.php';
+require_once 'inc/rest-api.php';
+require_once 'inc/admin.php';
+require_once 'inc/hooks.php';
+
+// Helper functions
+require_once 'helpers/service.php';
+require_once 'helpers/contents.php';
+require_once 'helpers/blocks.php';
+
 /**
- * Twenty Twenty-Five functions and definitions.
+ * Maps FBH functions and definitions
  *
- * @link https://developer.wordpress.org/themes/basics/theme-functions/
- *
- * @package WordPress
- * @subpackage Twenty_Twenty_Five
- * @since Twenty Twenty-Five 1.0
+ * @package Maps_FBH
+ * @since 1.0.0
  */
 
-// Adds theme support for post formats.
-if ( ! function_exists( 'twentytwentyfive_post_format_setup' ) ) :
-	/**
-	 * Adds theme support for post formats.
-	 *
-	 * @since Twenty Twenty-Five 1.0
-	 *
-	 * @return void
-	 */
-	function twentytwentyfive_post_format_setup() {
-		add_theme_support( 'post-formats', array( 'aside', 'audio', 'chat', 'gallery', 'image', 'link', 'quote', 'status', 'video' ) );
-	}
+if (!function_exists('maps_fbh_setup')) :
+    function maps_fbh_setup() {
+        add_theme_support('automatic-feed-links');
+        add_theme_support('title-tag');
+        add_theme_support('post-thumbnails');
+        add_theme_support('align-wide');
+        add_theme_support('responsive-embeds');
+    }
 endif;
-add_action( 'after_setup_theme', 'twentytwentyfive_post_format_setup' );
+add_action('after_setup_theme', 'maps_fbh_setup');
 
-// Enqueues editor-style.css in the editors.
-if ( ! function_exists( 'twentytwentyfive_editor_style' ) ) :
-	/**
-	 * Enqueues editor-style.css in the editors.
-	 *
-	 * @since Twenty Twenty-Five 1.0
-	 *
-	 * @return void
-	 */
-	function twentytwentyfive_editor_style() {
-		add_editor_style( 'assets/css/editor-style.css' );
-	}
-endif;
-add_action( 'after_setup_theme', 'twentytwentyfive_editor_style' );
+define('ALL_POST_TYPES', array(
+    'page',
+    'post',
+));
 
-// Enqueues the theme stylesheet on the front.
-if ( ! function_exists( 'twentytwentyfive_enqueue_styles' ) ) :
-	/**
-	 * Enqueues the theme stylesheet on the front.
-	 *
-	 * @since Twenty Twenty-Five 1.0
-	 *
-	 * @return void
-	 */
-	function twentytwentyfive_enqueue_styles() {
-		$suffix = SCRIPT_DEBUG ? '' : '.min';
-		$src    = 'style' . $suffix . '.css';
 
-		wp_enqueue_style(
-			'twentytwentyfive-style',
-			get_parent_theme_file_uri( $src ),
-			array(),
-			wp_get_theme()->get( 'Version' )
-		);
-		wp_style_add_data(
-			'twentytwentyfive-style',
-			'path',
-			get_parent_theme_file_path( $src )
-		);
-	}
-endif;
-add_action( 'wp_enqueue_scripts', 'twentytwentyfive_enqueue_styles' );
+/**
+ * Flush rewrite rules on theme activation
+ */
+function maps_fbh_flush_rewrite_rules() {
+    // Call this function only on theme activation
+    flush_rewrite_rules();
+}
+add_action('after_switch_theme', 'maps_fbh_flush_rewrite_rules');
 
-// Registers custom block styles.
-if ( ! function_exists( 'twentytwentyfive_block_styles' ) ) :
-	/**
-	 * Registers custom block styles.
-	 *
-	 * @since Twenty Twenty-Five 1.0
-	 *
-	 * @return void
-	 */
-	function twentytwentyfive_block_styles() {
-		register_block_style(
-			'core/list',
-			array(
-				'name'         => 'checkmark-list',
-				'label'        => __( 'Checkmark', 'twentytwentyfive' ),
-				'inline_style' => '
-				ul.is-style-checkmark-list {
-					list-style-type: "\2713";
-				}
+// CORS Headers
+function add_cors_http_header() {
+    $allowed_origins = array(
 
-				ul.is-style-checkmark-list li {
-					padding-inline-start: 1ch;
-				}',
-			)
-		);
-	}
-endif;
-add_action( 'init', 'twentytwentyfive_block_styles' );
+        'http://localhost:3000'
+    );
 
-// Registers pattern categories.
-if ( ! function_exists( 'twentytwentyfive_pattern_categories' ) ) :
-	/**
-	 * Registers pattern categories.
-	 *
-	 * @since Twenty Twenty-Five 1.0
-	 *
-	 * @return void
-	 */
-	function twentytwentyfive_pattern_categories() {
+    if (isset($_SERVER['HTTP_ORIGIN']) && in_array($_SERVER['HTTP_ORIGIN'], $allowed_origins)) {
+        header("Access-Control-Allow-Origin: " . $_SERVER['HTTP_ORIGIN']);
+        header("Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE");
+        header("Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept");
+        header('Access-Control-Allow-Credentials: true');
+    }
 
-		register_block_pattern_category(
-			'twentytwentyfive_page',
-			array(
-				'label'       => __( 'Pages', 'twentytwentyfive' ),
-				'description' => __( 'A collection of full page layouts.', 'twentytwentyfive' ),
-			)
-		);
+    if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+        status_header(200);
+        exit();
+    }
+}
+add_action('init', 'add_cors_http_header');
+add_action('rest_api_init', 'add_cors_http_header');
 
-		register_block_pattern_category(
-			'twentytwentyfive_post-format',
-			array(
-				'label'       => __( 'Post formats', 'twentytwentyfive' ),
-				'description' => __( 'A collection of post format patterns.', 'twentytwentyfive' ),
-			)
-		);
-	}
-endif;
-add_action( 'init', 'twentytwentyfive_pattern_categories' );
 
-// Registers block binding sources.
-if ( ! function_exists( 'twentytwentyfive_register_block_bindings' ) ) :
-	/**
-	 * Registers the post format block binding source.
-	 *
-	 * @since Twenty Twenty-Five 1.0
-	 *
-	 * @return void
-	 */
-	function twentytwentyfive_register_block_bindings() {
-		register_block_bindings_source(
-			'twentytwentyfive/format',
-			array(
-				'label'              => _x( 'Post format name', 'Label for the block binding placeholder in the editor', 'twentytwentyfive' ),
-				'get_value_callback' => 'twentytwentyfive_format_binding',
-			)
-		);
-	}
-endif;
-add_action( 'init', 'twentytwentyfive_register_block_bindings' );
+function allow_cors_for_images($headers) {
+    $allowed_origins = array(
 
-// Registers block binding callback function for the post format name.
-if ( ! function_exists( 'twentytwentyfive_format_binding' ) ) :
-	/**
-	 * Callback function for the post format name block binding source.
-	 *
-	 * @since Twenty Twenty-Five 1.0
-	 *
-	 * @return string|void Post format name, or nothing if the format is 'standard'.
-	 */
-	function twentytwentyfive_format_binding() {
-		$post_format_slug = get_post_format();
+        'http://localhost:3000'
+    );
 
-		if ( $post_format_slug && 'standard' !== $post_format_slug ) {
-			return get_post_format_string( $post_format_slug );
-		}
-	}
-endif;
+    if (isset($_SERVER['HTTP_ORIGIN']) && in_array($_SERVER['HTTP_ORIGIN'], $allowed_origins)) {
+        $headers['Access-Control-Allow-Origin'] = $_SERVER['HTTP_ORIGIN'];
+    }
+    return $headers;
+}
+add_filter('wp_headers', 'allow_cors_for_images');
+
+/**
+ * Canonical URL redirects for SEO
+ * Redirects CMS URLs to frontend domain for public content
+ */
+function maps_fbh_canonical_redirect() {
+    // Only apply to frontend requests (not admin, API, or logged-in users)
+    if (is_admin() || wp_doing_ajax() || is_user_logged_in()) {
+        return;
+    }
+
+    // Skip for REST API requests
+    if (defined('REST_REQUEST') && REST_REQUEST) {
+        return;
+    }
+
+    $frontend_domain = 'https://www.maps-fbh.fr';
+    
+    // Handle blog posts
+    if (is_single() && get_post_type() === 'post') {
+        $post_slug = get_post_field('post_name', get_the_ID());
+        $frontend_url = $frontend_domain . '/blog/' . $post_slug;
+        
+        wp_redirect($frontend_url, 301);
+        exit;
+    }
+    
+    // Handle category pages
+    if (is_category()) {
+        wp_redirect($frontend_domain . '/blog', 301);
+        exit;
+    }
+    
+    // Handle tag pages
+    if (is_tag()) {
+        wp_redirect($frontend_domain . '/blog', 301);
+        exit;
+    }
+    
+    // Handle main blog page
+    if (is_home() || is_front_page()) {
+        wp_redirect($frontend_domain . '/blog', 301);
+        exit;
+    }
+}
+// Temporarily disabled to troubleshoot admin access
+// add_action('template_redirect', 'maps_fbh_canonical_redirect');
+
+/**
+ * Add canonical meta tags for SEO
+ */
+function maps_fbh_add_canonical_meta() {
+    if (is_admin()) {
+        return;
+    }
+    
+    $frontend_domain = 'https://www.maps-fbh.fr';
+    $canonical_url = '';
+    
+    if (is_single() && get_post_type() === 'post') {
+        $post_slug = get_post_field('post_name', get_the_ID());
+        $canonical_url = $frontend_domain . '/blog/' . $post_slug;
+    } elseif (is_category() || is_tag() || is_home() || is_front_page()) {
+        $canonical_url = $frontend_domain . '/blog';
+    }
+    
+    if ($canonical_url) {
+        echo '<link rel="canonical" href="' . esc_url($canonical_url) . '" />' . "\n";
+        echo '<meta name="robots" content="noindex, nofollow" />' . "\n";
+    }
+}
+add_action('wp_head', 'maps_fbh_add_canonical_meta');
+
+/**
+ * Prevent search engines from indexing CMS domain
+ */
+function maps_fbh_add_noindex_meta() {
+    // Add noindex meta tag to prevent search engine indexing of CMS
+    if (!is_admin() && !wp_doing_ajax()) {
+        echo '<meta name="robots" content="noindex, nofollow, noarchive, nosnippet" />' . "\n";
+        echo '<meta name="googlebot" content="noindex, nofollow, noarchive, nosnippet" />' . "\n";
+    }
+}
+add_action('wp_head', 'maps_fbh_add_noindex_meta', 1);
+
