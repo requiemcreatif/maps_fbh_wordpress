@@ -334,20 +334,6 @@ function maps_fbh_get_shop_settings($request) {
     return new WP_REST_Response($settings, 200);
 }
 
-function maps_fbh_base64url_encode($value) {
-    return rtrim(strtr(base64_encode($value), '+/', '-_'), '=');
-}
-
-function maps_fbh_base64url_decode($value) {
-    $padding = strlen($value) % 4;
-
-    if ($padding) {
-        $value .= str_repeat('=', 4 - $padding);
-    }
-
-    return base64_decode(strtr($value, '-_', '+/'));
-}
-
 function maps_fbh_map_customer_user($user) {
     $first_name = get_user_meta($user->ID, 'first_name', true);
     $last_name = get_user_meta($user->ID, 'last_name', true);
@@ -385,35 +371,13 @@ function maps_fbh_map_customer_user($user) {
     );
 }
 
-function maps_fbh_issue_customer_session($user) {
-    $expiration = time() + apply_filters('auth_cookie_expiration', 14 * DAY_IN_SECONDS, $user->ID, false);
-    $auth_cookie = wp_generate_auth_cookie($user->ID, $expiration, 'logged_in');
-
-    return array(
-        'token' => maps_fbh_base64url_encode($auth_cookie),
-        'expires' => $expiration,
-        'user' => maps_fbh_map_customer_user($user),
-    );
-}
-
 function maps_fbh_get_authenticated_customer($request) {
-    $token = $request->get_header('x-maps-fbh-auth');
-
-    if (!$token) {
-        return new WP_Error(
-            'maps_fbh_auth_required',
-            'Authentication is required.',
-            array('status' => 401)
-        );
-    }
-
-    $auth_cookie = maps_fbh_base64url_decode($token);
-    $user_id = $auth_cookie ? wp_validate_auth_cookie($auth_cookie, 'logged_in') : 0;
+    $user_id = get_current_user_id();
 
     if (!$user_id) {
         return new WP_Error(
-            'maps_fbh_auth_invalid',
-            'The account session is invalid or expired.',
+            'maps_fbh_auth_required',
+            'Authentication is required.',
             array('status' => 401)
         );
     }
@@ -429,42 +393,6 @@ function maps_fbh_get_authenticated_customer($request) {
     }
 
     return $user;
-}
-
-function maps_fbh_customer_login($request) {
-    $email_or_username = sanitize_text_field($request->get_param('email'));
-    $password = (string) $request->get_param('password');
-
-    if (!$email_or_username || !$password) {
-        return new WP_Error(
-            'maps_fbh_login_missing_fields',
-            'Email and password are required.',
-            array('status' => 400)
-        );
-    }
-
-    $login = $email_or_username;
-
-    if (is_email($email_or_username)) {
-        $email_user = get_user_by('email', $email_or_username);
-        $login = $email_user ? $email_user->user_login : $email_or_username;
-    }
-
-    $user = wp_signon(array(
-        'user_login' => $login,
-        'user_password' => $password,
-        'remember' => true,
-    ), is_ssl());
-
-    if (is_wp_error($user)) {
-        return new WP_Error(
-            'maps_fbh_login_failed',
-            'Invalid email or password.',
-            array('status' => 401)
-        );
-    }
-
-    return new WP_REST_Response(maps_fbh_issue_customer_session($user), 200);
 }
 
 function maps_fbh_customer_register($request) {
@@ -506,7 +434,9 @@ function maps_fbh_customer_register($request) {
 
     $user = get_user_by('id', $user_id);
 
-    return new WP_REST_Response(maps_fbh_issue_customer_session($user), 201);
+    return new WP_REST_Response(array(
+        'user' => maps_fbh_map_customer_user($user),
+    ), 201);
 }
 
 function maps_fbh_customer_me($request) {
@@ -568,6 +498,18 @@ function maps_fbh_customer_orders($request) {
     ), 200);
 }
 
+function maps_fbh_customer_permission_callback($request) {
+    if (is_user_logged_in()) {
+        return true;
+    }
+
+    return new WP_Error(
+        'maps_fbh_auth_required',
+        'Authentication is required.',
+        array('status' => 401)
+    );
+}
+
 function maps_fbh_get_services($request) {
     $services = maps_fbh_get_content_items('service', 'maps_fbh_map_service');
     return new WP_REST_Response($services, 200);
@@ -596,12 +538,6 @@ function register_routes() {
         'permission_callback' => '__return_true',
     ));
 
-    register_rest_route('maps-fbh/v1', '/customer/login', array(
-        'methods' => WP_REST_Server::CREATABLE,
-        'callback' => 'maps_fbh_customer_login',
-        'permission_callback' => '__return_true',
-    ));
-
     register_rest_route('maps-fbh/v1', '/customer/register', array(
         'methods' => WP_REST_Server::CREATABLE,
         'callback' => 'maps_fbh_customer_register',
@@ -611,13 +547,13 @@ function register_routes() {
     register_rest_route('maps-fbh/v1', '/customer/me', array(
         'methods' => WP_REST_Server::READABLE,
         'callback' => 'maps_fbh_customer_me',
-        'permission_callback' => '__return_true',
+        'permission_callback' => 'maps_fbh_customer_permission_callback',
     ));
 
     register_rest_route('maps-fbh/v1', '/customer/orders', array(
         'methods' => WP_REST_Server::READABLE,
         'callback' => 'maps_fbh_customer_orders',
-        'permission_callback' => '__return_true',
+        'permission_callback' => 'maps_fbh_customer_permission_callback',
     ));
 
     register_rest_route('maps-fbh/v1', '/services', array(
