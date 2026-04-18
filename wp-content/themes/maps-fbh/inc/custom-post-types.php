@@ -61,7 +61,10 @@ function register_maps_fbh_content_post_type($post_type, $singular, $plural, $me
 
 function register_custom_post_types() {
 	register_maps_fbh_content_post_type('service', 'Service', 'Services', 'dashicons-heart');
-	register_maps_fbh_content_post_type('product', 'Product', 'Products', 'dashicons-cart');
+
+	if (!class_exists('WooCommerce')) {
+		register_maps_fbh_content_post_type('product', 'Product', 'Products', 'dashicons-cart');
+	}
 
 	register_post_type('contact_message', array(
 		'labels' => array(
