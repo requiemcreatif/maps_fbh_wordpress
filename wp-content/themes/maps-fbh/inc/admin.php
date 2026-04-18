@@ -73,3 +73,57 @@ function add_featured_image_support() {
     add_theme_support('post-thumbnails', apply_filters('pagelines_post-thumbnails', array('post')));
 }
 add_action('after_setup_theme', 'add_featured_image_support');
+
+function maps_fbh_get_or_create_homepage_id() {
+    $front_page_id = (int) get_option('page_on_front');
+
+    if ($front_page_id && get_post($front_page_id)) {
+        return $front_page_id;
+    }
+
+    $homepage = get_page_by_path('homepage', OBJECT, 'page');
+
+    if (!$homepage) {
+        $homepage_id = wp_insert_post(array(
+            'post_title' => 'Homepage',
+            'post_name' => 'homepage',
+            'post_type' => 'page',
+            'post_status' => 'publish',
+        ));
+    } else {
+        $homepage_id = $homepage->ID;
+    }
+
+    if ($homepage_id && !is_wp_error($homepage_id)) {
+        update_option('show_on_front', 'page');
+        update_option('page_on_front', $homepage_id);
+
+        return (int) $homepage_id;
+    }
+
+    return 0;
+}
+
+function maps_fbh_add_homepage_admin_menu() {
+    add_menu_page(
+        'Homepage',
+        'Homepage',
+        'edit_pages',
+        'maps-fbh-homepage',
+        'maps_fbh_redirect_to_homepage_editor',
+        'dashicons-admin-home',
+        21
+    );
+}
+add_action('admin_menu', 'maps_fbh_add_homepage_admin_menu');
+
+function maps_fbh_redirect_to_homepage_editor() {
+    $homepage_id = maps_fbh_get_or_create_homepage_id();
+
+    if ($homepage_id) {
+        wp_safe_redirect(admin_url('post.php?post=' . $homepage_id . '&action=edit'));
+        exit;
+    }
+
+    wp_die('Unable to create or locate the Homepage page.');
+}

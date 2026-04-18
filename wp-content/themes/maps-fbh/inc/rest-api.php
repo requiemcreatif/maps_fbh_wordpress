@@ -75,35 +75,64 @@ function maps_fbh_map_service($post) {
     );
 }
 
-function maps_fbh_get_section_post($slug) {
-    $post = get_page_by_path($slug, OBJECT, 'site_section');
+function maps_fbh_get_homepage_post() {
+    $front_page_id = (int) get_option('page_on_front');
 
-    if ($post) {
-        return $post;
+    if ($front_page_id) {
+        $post = get_post($front_page_id);
+
+        if ($post && $post->post_type === 'page') {
+            return $post;
+        }
     }
 
-    $posts = get_posts(array(
-        'post_type' => 'site_section',
-        'post_status' => 'publish',
-        'numberposts' => 2,
-        'orderby' => 'date',
-        'order' => 'ASC',
-    ));
+    $post = get_page_by_path('homepage', OBJECT, 'page');
 
-    if (count($posts) === 1) {
-        return $posts[0];
+    if ($post && $post->post_type === 'page') {
+        return $post;
     }
 
     return null;
 }
 
+function maps_fbh_get_legacy_section_post($slug) {
+    return get_page_by_path($slug, OBJECT, 'site_section');
+}
+
+function maps_fbh_get_acf_value_with_legacy($post_id, $field_name, $legacy_post = null) {
+    $value = maps_fbh_get_acf_value($post_id, $field_name);
+
+    if (($value === null || $value === '' || $value === false) && $legacy_post) {
+        return maps_fbh_get_acf_value($legacy_post->ID, $field_name);
+    }
+
+    return $value;
+}
+
 function maps_fbh_get_about_section_data() {
-    $post = maps_fbh_get_section_post('about-section');
+    $post = maps_fbh_get_homepage_post();
+    $legacy_post = maps_fbh_get_legacy_section_post('about-section');
+
+    if (!$legacy_post) {
+        $legacy_posts = get_posts(array(
+            'post_type' => 'site_section',
+            'post_status' => 'publish',
+            'numberposts' => 1,
+            'orderby' => 'date',
+            'order' => 'ASC',
+        ));
+
+        $legacy_post = !empty($legacy_posts) ? $legacy_posts[0] : null;
+    }
+
+    if (!$post && $legacy_post) {
+        $post = $legacy_post;
+    }
 
     if (!$post) {
         return array(
             'id' => null,
-            'slug' => 'about-section',
+            'slug' => 'homepage',
             'configured' => false,
             'section_label' => '',
             'title' => '',
@@ -115,17 +144,19 @@ function maps_fbh_get_about_section_data() {
     }
 
     $post_id = $post->ID;
+    $value_post = $post->post_type === 'page' ? $post : null;
+    $fallback_post = $value_post ? $legacy_post : null;
 
     return array(
         'id' => $post_id,
         'slug' => $post->post_name,
         'configured' => true,
-        'section_label' => maps_fbh_get_acf_value($post_id, 'about_section_label') ?: maps_fbh_get_acf_value($post_id, 'about_eyebrow') ?: 'À propos',
-        'title' => maps_fbh_get_acf_value($post_id, 'about_title') ?: get_the_title($post_id),
-        'intro' => maps_fbh_get_acf_value($post_id, 'about_intro') ?: '',
-        'body' => maps_fbh_get_acf_value($post_id, 'about_body') ?: '',
-        'cta_label' => maps_fbh_get_acf_value($post_id, 'about_cta_label') ?: 'En savoir plus',
-        'image' => maps_fbh_normalize_image(maps_fbh_get_acf_value($post_id, 'about_image')),
+        'section_label' => maps_fbh_get_acf_value_with_legacy($post_id, 'about_section_label', $fallback_post) ?: maps_fbh_get_acf_value_with_legacy($post_id, 'about_eyebrow', $fallback_post) ?: 'À propos',
+        'title' => maps_fbh_get_acf_value_with_legacy($post_id, 'about_title', $fallback_post) ?: get_the_title($post_id),
+        'intro' => maps_fbh_get_acf_value_with_legacy($post_id, 'about_intro', $fallback_post) ?: '',
+        'body' => maps_fbh_get_acf_value_with_legacy($post_id, 'about_body', $fallback_post) ?: '',
+        'cta_label' => maps_fbh_get_acf_value_with_legacy($post_id, 'about_cta_label', $fallback_post) ?: 'En savoir plus',
+        'image' => maps_fbh_normalize_image(maps_fbh_get_acf_value_with_legacy($post_id, 'about_image', $fallback_post)),
     );
 }
 
@@ -141,6 +172,53 @@ function maps_fbh_get_content_items($post_type, $mapper) {
     return array_map($mapper, $posts);
 }
 
+function maps_fbh_map_hero_slide($post_id, $slide_number, $legacy_post = null) {
+    return array(
+        'title' => maps_fbh_get_acf_value_with_legacy($post_id, 'hero_slide_' . $slide_number . '_title', $legacy_post) ?: '',
+        'subtitle' => maps_fbh_get_acf_value_with_legacy($post_id, 'hero_slide_' . $slide_number . '_subtitle', $legacy_post) ?: '',
+        'image' => maps_fbh_normalize_image(maps_fbh_get_acf_value_with_legacy($post_id, 'hero_slide_' . $slide_number . '_image', $legacy_post)),
+    );
+}
+
+function maps_fbh_get_hero_section_data() {
+    $post = maps_fbh_get_homepage_post();
+    $legacy_post = maps_fbh_get_legacy_section_post('hero-section');
+
+    if (!$post && $legacy_post) {
+        $post = $legacy_post;
+    }
+
+    if (!$post) {
+        return array(
+            'id' => null,
+            'slug' => 'homepage',
+            'configured' => false,
+            'cta_label' => '',
+            'slides' => array(),
+        );
+    }
+
+    $post_id = $post->ID;
+    $slides = array();
+    $fallback_post = $post->post_type === 'page' ? $legacy_post : null;
+
+    for ($index = 1; $index <= 3; $index++) {
+        $slide = maps_fbh_map_hero_slide($post_id, $index, $fallback_post);
+
+        if (!empty($slide['image'])) {
+            $slides[] = $slide;
+        }
+    }
+
+    return array(
+        'id' => $post_id,
+        'slug' => $post->post_name,
+        'configured' => count($slides) > 0,
+        'cta_label' => maps_fbh_get_acf_value_with_legacy($post_id, 'hero_cta_label', $fallback_post) ?: 'Découvrir',
+        'slides' => $slides,
+    );
+}
+
 function maps_fbh_get_products($request) {
     $products = maps_fbh_get_content_items('product', 'maps_fbh_map_product');
     return new WP_REST_Response($products, 200);
@@ -154,6 +232,11 @@ function maps_fbh_get_services($request) {
 function maps_fbh_get_about_section($request) {
     $about_section = maps_fbh_get_about_section_data();
     return new WP_REST_Response($about_section, 200);
+}
+
+function maps_fbh_get_hero_section($request) {
+    $hero_section = maps_fbh_get_hero_section_data();
+    return new WP_REST_Response($hero_section, 200);
 }
 
 function register_routes() {
@@ -172,6 +255,12 @@ function register_routes() {
     register_rest_route('maps-fbh/v1', '/about-section', array(
         'methods' => WP_REST_Server::READABLE,
         'callback' => 'maps_fbh_get_about_section',
+        'permission_callback' => '__return_true',
+    ));
+
+    register_rest_route('maps-fbh/v1', '/hero-section', array(
+        'methods' => WP_REST_Server::READABLE,
+        'callback' => 'maps_fbh_get_hero_section',
         'permission_callback' => '__return_true',
     ));
 }

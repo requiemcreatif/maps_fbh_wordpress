@@ -1,0 +1,126 @@
+{
+    "key": "group_maps_fbh_hero_section",
+    "title": "Hero Section",
+    "fields": [
+        {
+            "key": "field_maps_fbh_hero_cta_label",
+            "label": "CTA Label",
+            "name": "hero_cta_label",
+            "type": "text",
+            "required": 0,
+            "default_value": "Découvrir"
+        },
+        {
+            "key": "field_maps_fbh_hero_slide_1_tab",
+            "label": "Slide 1",
+            "name": "",
+            "type": "tab",
+            "placement": "top"
+        },
+        {
+            "key": "field_maps_fbh_hero_slide_1_title",
+            "label": "Title",
+            "name": "hero_slide_1_title",
+            "type": "text",
+            "required": 0
+        },
+        {
+            "key": "field_maps_fbh_hero_slide_1_subtitle",
+            "label": "Subtitle",
+            "name": "hero_slide_1_subtitle",
+            "type": "text",
+            "required": 0
+        },
+        {
+            "key": "field_maps_fbh_hero_slide_1_image",
+            "label": "Image",
+            "name": "hero_slide_1_image",
+            "type": "image",
+            "required": 0,
+            "return_format": "array",
+            "preview_size": "medium",
+            "library": "all"
+        },
+        {
+            "key": "field_maps_fbh_hero_slide_2_tab",
+            "label": "Slide 2",
+            "name": "",
+            "type": "tab",
+            "placement": "top"
+        },
+        {
+            "key": "field_maps_fbh_hero_slide_2_title",
+            "label": "Title",
+            "name": "hero_slide_2_title",
+            "type": "text",
+            "required": 0
+        },
+        {
+            "key": "field_maps_fbh_hero_slide_2_subtitle",
+            "label": "Subtitle",
+            "name": "hero_slide_2_subtitle",
+            "type": "text",
+            "required": 0
+        },
+        {
+            "key": "field_maps_fbh_hero_slide_2_image",
+            "label": "Image",
+            "name": "hero_slide_2_image",
+            "type": "image",
+            "required": 0,
+            "return_format": "array",
+            "preview_size": "medium",
+            "library": "all"
+        },
+        {
+            "key": "field_maps_fbh_hero_slide_3_tab",
+            "label": "Slide 3",
+            "name": "",
+            "type": "tab",
+            "placement": "top"
+        },
+        {
+            "key": "field_maps_fbh_hero_slide_3_title",
+            "label": "Title",
+            "name": "hero_slide_3_title",
+            "type": "text",
+            "required": 0
+        },
+        {
+            "key": "field_maps_fbh_hero_slide_3_subtitle",
+            "label": "Subtitle",
+            "name": "hero_slide_3_subtitle",
+            "type": "text",
+            "required": 0
+        },
+        {
+            "key": "field_maps_fbh_hero_slide_3_image",
+            "label": "Image",
+            "name": "hero_slide_3_image",
+            "type": "image",
+            "required": 0,
+            "return_format": "array",
+            "preview_size": "medium",
+            "library": "all"
+        }
+    ],
+    "location": [
+        [
+            {
+                "param": "page_type",
+                "operator": "==",
+                "value": "front_page"
+            }
+        ]
+    ],
+    "menu_order": 0,
+    "position": "normal",
+    "style": "default",
+    "label_placement": "top",
+    "instruction_placement": "label",
+    "hide_on_screen": "",
+    "active": true,
+    "description": "Fields for the homepage hero carousel.",
+    "show_in_rest": 1,
+    "modified": 1776510000
+}
